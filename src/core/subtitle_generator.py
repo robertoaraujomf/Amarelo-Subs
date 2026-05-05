@@ -12,12 +12,12 @@ class SubtitleGenerator:
 
     def generate(self, segments, output_path):
         """Gera o arquivo .srt aplicando cor, negrito e tamanho"""
-        color = self.config.get("font_color", "#f4c430")
-        is_bold = self.config.get("font_bold", True)
-        
+        color = self.config.get("font.color", "#f4c430")
+        is_bold = self.config.get("font.bold", True)
+
         # Mapeamento de tamanho (SRT aceita tags de fonte em players modernos)
         size_map = {"Pequeno": "12", "Médio": "18", "Grande": "24"}
-        size_label = self.config.get("font_size_label", "Médio")
+        size_label = self.config.get("font.size_label", "Médio")
         font_size = size_map.get(size_label, "18")
 
         try:
@@ -28,7 +28,7 @@ class SubtitleGenerator:
                     text = segment['text'].strip()
                     
                     # Aplica Formatação Visual
-                    styled_text = f'<font color="{color}">{text}</font>'
+                    styled_text = f'<font color="{color}" size="{font_size}">{text}</font>'
                     if is_bold:
                         styled_text = f'<b>{styled_text}</b>'
                     

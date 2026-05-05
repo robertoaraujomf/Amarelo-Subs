@@ -1,5 +1,6 @@
 import os
 import json
+import platform
 import logging
 from typing import Dict, Any
 
@@ -7,28 +8,34 @@ logger = logging.getLogger(__name__)
 
 class ConfigManager:
     """Gerenciador de configurações"""
-    
+
     _instance = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         # Evitar múltiplas inicializações
         if hasattr(self, '_initialized'):
             return
-        
+
         self._initialized = True
         self.config_file = None
         self.config = {}
         self._default_config = self._get_default_config()
-        
+
     def initialize(self, config_file: str = None):
         """Inicializa com arquivo de configuração"""
         if config_file is None:
-            config_dir = os.path.join(os.path.expanduser('~'), '.amarelo_legendas')
+            if platform.system() == "Windows":
+                app_data = os.environ.get("APPDATA", os.path.join(os.path.expanduser("~"), "AppData", "Roaming"))
+                config_dir = os.path.join(app_data, 'AmareloSubs')
+            elif platform.system() == "Darwin":
+                config_dir = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "AmareloSubs")
+            else:
+                config_dir = os.path.join(os.path.expanduser("~"), '.amarelo_subs')
             os.makedirs(config_dir, exist_ok=True)
             config_file = os.path.join(config_dir, 'config.json')
         

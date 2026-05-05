@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amarelo-subs"
+version = "1.0.0"
+description = "Automated subtitle creation, formatting, translation, synchronization and video burning"
+requires-python = ">=3.10"
+dependencies = [
+    "PyQt6",
+    "openai-whisper",
+    "deep-translator",
+    "setuptools",
+    "requests",
+]
+
+[project.scripts]
+amarelo-subs = "main:main"

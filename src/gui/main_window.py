@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import platform
+import subprocess
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QFileDialog, QMessageBox, QGroupBox, 
                              QLabel, QCheckBox, QTextEdit, QColorDialog, QComboBox,
@@ -147,7 +149,12 @@ class MainWindow(QMainWindow):
 
     def _open_folder(self):
         if self.last_dir:
-            os.startfile(self.last_dir)
+            if platform.system() == "Windows":
+                os.startfile(self.last_dir)
+            elif platform.system() == "Darwin":
+                subprocess.Popen(["open", self.last_dir])
+            else:
+                subprocess.Popen(["xdg-open", self.last_dir])
 
     def _on_start(self):
         path = QFileDialog.getExistingDirectory(self, "Selecionar Pasta")
@@ -179,8 +186,10 @@ class MainWindow(QMainWindow):
         choice = self.combo_lang.currentText()
         self.config.set("font.color", self.selected_color)
         self.config.set("font.bold", self.check_bold.isChecked())
+        self.config.set("font.size_label", self.combo_size.currentText())
         self.config.set("translation.enabled", choice != "Original (Sem Tradução)")
         self.config.set("translation.target_language", lang_map.get(choice, "pt"))
+        self.config.set("video.merge_subtitles", True)
 
         # Reiniciar Estado da UI
         self.btn_run.setEnabled(False)

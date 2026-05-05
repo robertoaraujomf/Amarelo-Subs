@@ -5,25 +5,24 @@ import tempfile
 import zipfile
 import platform
 import shutil
-import winreg  # Apenas para Windows
 
 class FFmpegInstaller:
     """Instalador automático de FFmpeg para Windows, Linux e macOS"""
-    
+
     def __init__(self):
         self.system = platform.system().lower()
-        
+
     def check_ffmpeg(self):
         """Verifica se FFmpeg está disponível no PATH"""
         try:
-            result = subprocess.run(['ffmpeg', '-version'], 
-                                  capture_output=True, 
+            result = subprocess.run(['ffmpeg', '-version'],
+                                  capture_output=True,
                                   text=True,
                                   timeout=5)
             return result.returncode == 0
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
-            
+
     def install(self):
         """Instala FFmpeg automaticamente de acordo com o sistema"""
         if 'win' in self.system:
@@ -35,9 +34,10 @@ class FFmpegInstaller:
         else:
             print(f"Sistema não suportado: {self.system}")
             return False
-            
+
     def _install_windows(self):
         """Instala FFmpeg no Windows"""
+        import winreg
         import requests
         
         print("Baixando FFmpeg para Windows...")

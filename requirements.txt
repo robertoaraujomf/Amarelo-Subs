@@ -2,3 +2,4 @@ PyQt6
 openai-whisper
 deep-translator
 setuptools
+requests

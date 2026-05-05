@@ -1,7 +1,7 @@
 import sys
 import os
-import ctypes
 import traceback
+import subprocess
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import Qt
 from src.gui.main_window import MainWindow
@@ -21,9 +21,10 @@ def exception_hook(exctype, value, tb):
     sys.exit(1)
 
 def apply_windows_taskbar_fix():
-    """Fix para o ícone aparecer na barra de tarefas do Windows."""
+    """Fix para o cone aparecer na barra de tarefas do Windows."""
     if sys.platform == "win32":
         try:
+            import ctypes
             myappid = 'yellowsubs.v1.0.0'
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         except Exception:
