@@ -18,6 +18,18 @@ class VideoMerger:
             path = path.replace(ch, f"\\{ch}")
         return path
 
+    def _hex_to_ass_color(self, hex_color):
+        """Converte cor hexadecimal para formato ASS (&HBBGGRR&)"""
+        hex_color = hex_color.lstrip("#")
+        r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        return f"&H{b:02X}{g:02X}{r:02X}&"
+
+    def _get_subtitle_path(self, srt_path):
+        """Retorna o caminho do arquivo ASS correspondente ao SRT."""
+        if srt_path.endswith(".srt"):
+            return srt_path.replace(".srt", ".ass")
+        return srt_path
+
     def merge(self, video_path, srt_path, output_path, progress_callback=None):
         """
         Queima (hardcode) as legendas do arquivo SRT no vdeo.
@@ -26,25 +38,31 @@ class VideoMerger:
         if progress_callback:
             progress_callback(0)
 
+        ass_path = self._get_subtitle_path(srt_path)
+        if not os.path.exists(ass_path):
+            print(f"Arquivo ASS não encontrado: {ass_path}")
+            return False
+
         color = self.config.get("font.color", "#f4c430")
         is_bold = self.config.get("font.bold", True)
-        size_map = {"Pequeno": "12", "Mdio": "18", "Grande": "24"}
-        size_label = self.config.get("font.size_label", "Mdio")
+        size_map = {"Pequeno": "12", "Médio": "18", "Grande": "24"}
+        size_label = self.config.get("font.size_label", "Médio")
         fontsize = size_map.get(size_label, "18")
 
         bold_val = 1 if is_bold else 0
-        escaped_srt = self._escape_path(srt_path)
+        ass_color = self._hex_to_ass_color(color)
+        escaped_ass = self._escape_path(ass_path)
 
         force_style = (
             f"FontName=Arial,FontSize={fontsize},"
-            f"PrimaryColour=&H{color[1:]}&,Bold={bold_val},"
+            f"PrimaryColour={ass_color},Bold={bold_val},"
             f"Outline=1,Shadow=1,MarginV=30"
         )
 
         cmd = [
             "ffmpeg", "-y",
             "-i", video_path,
-            "-vf", f"subtitles='{escaped_srt}':force_style='{force_style}'",
+            "-vf", f"subtitles='{escaped_ass}':force_style='{force_style}'",
             "-c:a", "copy",
             "-preset", "fast",
             "-movflags", "+faststart",

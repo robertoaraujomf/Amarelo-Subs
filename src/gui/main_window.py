@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QCheckBox, QTextEdit, QColorDialog, QComboBox,
                              QProgressBar, QScrollArea)
 from PyQt6.QtGui import QColor, QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSlot
 from src.core.workflow_manager import WorkflowManager
 
 class MainWindow(QMainWindow):
@@ -65,6 +65,24 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.main_layout = QVBoxLayout(self.central_widget)
         self.main_layout.setContentsMargins(30, 30, 30, 30)
+
+        # Modo de Operação
+        self.mode_group = QGroupBox("Modo de Operação")
+        self.mode_group.setStyleSheet("QGroupBox { border: 1px solid #475569; border-radius: 10px; margin-top: 20px; padding-top: 15px; color: #94a3b8; }")
+        mode_layout = QHBoxLayout()
+        
+        self.combo_mode = QComboBox()
+        self.combo_mode.addItems([
+            "Legendar + Mesclar (Completo)",
+            "Apenas Transcrever e Gerar Legenda",
+            "Apenas Traduzir Legendas",
+            "Apenas Formatar Legendas",
+            "Apenas Corrigir Sincronização",
+            "Apenas Mesclar Legendas"
+        ])
+        
+        mode_layout.addWidget(QLabel("Modo:")); mode_layout.addWidget(self.combo_mode); mode_layout.addStretch()
+        self.mode_group.setLayout(mode_layout); self.main_layout.addWidget(self.mode_group)
 
         # Configurações do Projeto
         self.style_group = QGroupBox("Configurações do Projeto")
@@ -138,6 +156,7 @@ class MainWindow(QMainWindow):
         self.workflow.preview_update.connect(self.log_view.append)
         self.workflow.finished.connect(self._on_finished)
 
+    @pyqtSlot()
     def _select_color(self):
         color = QColorDialog.getColor(QColor(self.selected_color))
         if color.isValid():
@@ -147,6 +166,7 @@ class MainWindow(QMainWindow):
     def _update_btn_color(self):
         self.btn_color.setStyleSheet(f"background-color: {self.selected_color}; border-radius: 4px; border: 1px solid white;")
 
+    @pyqtSlot()
     def _open_folder(self):
         if self.last_dir:
             if platform.system() == "Windows":
@@ -162,12 +182,24 @@ class MainWindow(QMainWindow):
             return
         self.last_dir = path
         
-        # Detectar arquivos de vídeo compatíveis
-        extensions = ('.mp4', '.mkv', '.avi', '.mov')
-        videos = [f for f in os.listdir(path) if f.lower().endswith(extensions)]
-        if not videos:
-            QMessageBox.warning(self, "Erro", "Nenhum vídeo compatível encontrado na pasta.")
-            return
+        # Detectar arquivos de vídeo e legenda compatíveis
+        video_ext = ('.mp4', '.mkv', '.avi', '.mov')
+        sub_ext = ('.srt', '.ass')
+        
+        videos = [f for f in os.listdir(path) if f.lower().endswith(video_ext)]
+        subtitles = [f for f in os.listdir(path) if f.lower().endswith(sub_ext)]
+        
+        mode_index = self.combo_mode.currentIndex()
+        
+        if mode_index in [0, 1]:  # Modos que requerem vídeo
+            if not videos:
+                QMessageBox.warning(self, "Erro", "Nenhum vídeo compatível encontrado na pasta.")
+                return
+        
+        if mode_index in [2, 3, 4, 5]:  # Modos que requerem legenda
+            if not subtitles:
+                QMessageBox.warning(self, "Erro", "Nenhum arquivo de legenda (.srt ou .ass) encontrado na pasta.")
+                return
 
         # Limpar a fila visual anterior com segurança
         for i in reversed(range(self.video_list_layout.count())): 
@@ -189,7 +221,9 @@ class MainWindow(QMainWindow):
         self.config.set("font.size_label", self.combo_size.currentText())
         self.config.set("translation.enabled", choice != "Original (Sem Tradução)")
         self.config.set("translation.target_language", lang_map.get(choice, "pt"))
-        self.config.set("video.merge_subtitles", True)
+        
+        mode_index = self.combo_mode.currentIndex()
+        self.config.set("operation.mode", mode_index)
 
         # Reiniciar Estado da UI
         self.btn_run.setEnabled(False)
